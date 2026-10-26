@@ -1,4 +1,28 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+let THREE;
+
+const THREE_CDNS = [
+  'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js',
+  'https://unpkg.com/three@0.180.0/build/three.module.js'
+];
+
+async function loadThree() {
+  let lastError;
+
+  for (const url of THREE_CDNS) {
+    try {
+      THREE = await import(url);
+      return;
+    } catch (error) {
+      lastError = error;
+      console.error('Three.js 로딩 실패:', url, error);
+    }
+  }
+
+  throw new Error(
+    'Three.js를 불러오지 못했습니다. 인터넷 연결 또는 CDN 접근을 확인하세요. ' +
+    (lastError?.message || '')
+  );
+}
 
 const $ = (id) => document.getElementById(id);
 const CHUNK = 16;
@@ -32,6 +56,7 @@ let scene, camera, renderer, clock;
 let running = false, paused = false, inventoryOpen = false;
 let seed = 'wave-' + Math.random().toString(36).slice(2, 8);
 let seedNumber = 0;
+let randomState = 0;
 let blocks = new Map();
 let chunkMeshes = new Map();
 let dirtyChunks = new Set();
@@ -58,10 +83,11 @@ function hashString(str) {
   return h >>> 0;
 }
 function seededRandom() {
-  let t = seedNumber += 0x6D2B79F5;
-  t = Math.imul(t ^ t >>> 15, t | 1);
-  t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-  return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  let t = randomState += 0x6D2B79F5;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 function keyOf(x,y,z) { return `${x},${y},${z}`; }
 function chunkKey(cx,cz) { return `${cx},${cz}`; }
@@ -94,6 +120,7 @@ function heightAt(x,z) {
 function generateWorld(newSeed) {
   seed = newSeed || ('wave-' + Math.random().toString(36).slice(2,8));
   seedNumber = hashString(seed);
+  randomState = seedNumber;
   blocks.clear(); chunkMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); }); chunkMeshes.clear(); dirtyChunks.clear();
   const rand = seededRandom;
   const heights = [];
@@ -258,8 +285,10 @@ function getLookTarget() {
 function mineBlock() {
   if(!target) return;
   const id=getBlock(target.x,target.y,target.z);
+  
   if(!id || id==='bedrock') { showMessage('이 블록은 부술 수 없습니다.'); return; }
   setBlock(target.x,target.y,target.z,null);
+  rebuildDirtyChunks();
   const slot=hotbar.indexOf(id);
   if(slot>=0) { selectedSlot=slot; }
   else { hotbar[selectedSlot]=id; }
@@ -488,15 +517,34 @@ function loop() {
 }
 async function init() {
   try {
+    await loadThree();
+
+    const testCanvas = document.createElement('canvas');
+    const gl = testCanvas.getContext('webgl2');
+
+    if (!gl) {
+      throw new Error(
+        '이 브라우저에서 WebGL 2를 사용할 수 없습니다. ' +
+        'Safari 업데이트와 그래픽 가속 환경을 확인하세요.'
+      );
+    }
+
+    const loseContext = gl.getExtension('WEBGL_lose_context');
+    if (loseContext) loseContext.loseContext();
+
     setupScene();
     bindEvents();
     updateHotbar();
-    // Display a subtle ground-colored loading view until the player starts.
     loop();
-  } catch(err) {
-    console.error(err);
+
+  } catch (err) {
+    console.error('게임 초기화 오류:', err);
+
     $('error-screen').classList.remove('hidden');
-    $('error-text').textContent=`초기화 오류: ${err?.message||err}`;
+
+    $('error-text').textContent =
+      err?.message || String(err) || '알 수 없는 초기화 오류';
   }
 }
+
 init();
