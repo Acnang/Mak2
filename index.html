@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#172033">
+  <title>블록웨이브 - 3D 샌드박스</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <div id="game-root">
+    <canvas id="game-canvas" aria-label="3D 게임 화면"></canvas>
+
+    <div id="start-screen" class="screen">
+      <div class="panel">
+        <div class="eyebrow">VOXEL SANDBOX</div>
+        <h1>블록웨이브</h1>
+        <p>탐험하고, 부수고, 원하는 곳에 블록을 놓아 보세요.</p>
+        <label for="seed-input">월드 시드 (선택)</label>
+        <input id="seed-input" maxlength="32" placeholder="비워 두면 무작위 시드">
+        <button id="start-button" class="primary">월드 시작</button>
+        <div class="small">PC: WASD 이동 · Space 점프 · 마우스 채굴/설치<br>모바일: 왼쪽 조이스틱 · 오른쪽 화면 회전</div>
+      </div>
+    </div>
+
+    <div id="hud" class="hidden">
+      <div class="top-left">
+        <div class="pill" id="status-text">월드 준비 중</div>
+        <div class="pill" id="coords-text">X 0 · Y 0 · Z 0</div>
+      </div>
+      <div id="crosshair"><span></span><i></i></div>
+      <div id="target-label"></div>
+      <div id="hotbar" aria-label="핫바"></div>
+      <div id="hint" class="pill">WASD 이동 · Space 점프 · 좌클릭 채굴 · 우클릭 설치</div>
+      <div id="mobile-controls">
+        <div id="joystick-zone" aria-label="이동 조이스틱">
+          <div id="joystick-base"><div id="joystick-knob"></div></div>
+        </div>
+        <div id="mobile-actions">
+          <button id="look-help" class="touch-button subtle">시점은 오른쪽 드래그</button>
+          <div class="action-row">
+            <button id="mobile-mine" class="touch-button">채굴</button>
+            <button id="mobile-place" class="touch-button">설치</button>
+            <button id="mobile-jump" class="touch-button jump">점프</button>
+          </div>
+          <button id="mobile-inventory" class="touch-button subtle">블록 선택</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pause-screen" class="screen hidden">
+      <div class="panel">
+        <h2>일시정지</h2>
+        <p>잠시 쉬어 가세요.</p>
+        <button id="resume-button" class="primary">계속하기</button>
+        <button id="save-button">월드 내보내기</button>
+        <button id="menu-button">시작 화면으로</button>
+        <div class="small">월드는 이 기기의 브라우저에 자동 저장됩니다.</div>
+      </div>
+    </div>
+
+    <div id="inventory-screen" class="screen hidden">
+      <div class="panel inventory-panel">
+        <h2>블록 선택</h2>
+        <p>사용할 블록을 선택하세요.</p>
+        <div id="inventory-grid"></div>
+        <button id="inventory-close" class="primary">닫기 (E)</button>
+      </div>
+    </div>
+
+    <div id="message" role="status"></div>
+    <div id="error-screen" class="screen hidden">
+      <div class="panel">
+        <h2>게임을 시작할 수 없습니다</h2>
+        <p id="error-text">WebGL 또는 Three.js를 사용할 수 없습니다.</p>
+        <p class="small">인터넷 연결을 확인한 뒤 페이지를 새로고침해 주세요.</p>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
